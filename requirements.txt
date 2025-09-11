@@ -1,0 +1,5 @@
+echo "face-recognition
+opencv-python
+numpy
+pandas
+openpyxl" > requirements.txt
