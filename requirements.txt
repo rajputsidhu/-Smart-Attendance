@@ -1,5 +1,4 @@
-echo "face-recognition
+face-recognition
 opencv-python
 numpy
-pandas
-openpyxl" > requirements.txt
+flask

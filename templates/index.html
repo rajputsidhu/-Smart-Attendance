@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .header .date {
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- Video Panel --- */
+        .video-panel {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+
+        .video-panel .panel-header {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        .video-panel .panel-header h2 {
+            font-size: 1.1rem;
+            color: #f1f5f9;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.inactive { background: #374151; color: #9ca3af; }
+        .status-badge.active   { background: #065f46; color: #6ee7b7; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-placeholder {
+            text-align: center;
+            color: #64748b;
+        }
+
+        .video-placeholder svg {
+            width: 64px; height: 64px;
+            margin-bottom: 12px;
+            fill: #475569;
+        }
+
+        .controls {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            border-top: 1px solid #334155;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-start {
+            background: #16a34a;
+            color: white;
+        }
+        .btn-start:hover:not(:disabled) { background: #15803d; }
+
+        .btn-stop {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-stop:hover:not(:disabled) { background: #b91c1c; }
+
+        .btn-csv {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-csv:hover:not(:disabled) { background: #1d4ed8; }
+
+        /* --- Right Sidebar --- */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Stat Cards */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-card .label {
+            margin-top: 6px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card.present .number  { color: #4ade80; }
+        .stat-card.absent  .number  { color: #f87171; }
+        .stat-card.total   .number  { color: #60a5fa; }
+        .stat-card.percent .number  { color: #c084fc; }
+
+        /* Attendance Table */
+        .attendance-panel {
+            flex: 1;
+            background: #1e293b;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .attendance-panel .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .attendance-panel .panel-header h2 {
+            font-size: 1.1rem;
+            color: #f1f5f9;
+        }
+
+        .attendance-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .attendance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .attendance-item:hover {
+            background: #334155;
+        }
+
+        .attendance-item .name {
+            font-weight: 500;
+        }
+
+        .attendance-item .time {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-family: monospace;
+        }
+
+        .tag {
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag.present { background: #065f46; color: #6ee7b7; }
+        .tag.absent  { background: #7f1d1d; color: #fca5a5; }
+
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Smart Attendance System</h1>
+    <div class="date" id="currentDate"></div>
+</div>
+
+<div class="main">
+    <!-- Left: Video Feed -->
+    <div class="video-panel">
+        <div class="panel-header">
+            <h2>Live Camera Feed</h2>
+            <span class="status-badge inactive" id="statusBadge">Inactive</span>
+        </div>
+        <div class="video-container" id="videoContainer">
+            <div class="video-placeholder" id="placeholder">
+                <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                <p>Click <strong>Start Recognition</strong> to begin</p>
+            </div>
+            <img id="videoFeed" src="" style="display:none;" alt="Live Feed">
+        </div>
+        <div class="controls">
+            <button class="btn btn-start" id="btnStart" onclick="startRecognition()">Start Recognition</button>
+            <button class="btn btn-stop"  id="btnStop"  onclick="stopRecognition()" disabled>Stop</button>
+            <button class="btn btn-csv"   id="btnCSV"   onclick="downloadCSV()" disabled>Download CSV</button>
+        </div>
+    </div>
+
+    <!-- Right: Stats & Attendance -->
+    <div class="sidebar">
+        <div class="stats">
+            <div class="stat-card present">
+                <div class="number" id="presentCount">0</div>
+                <div class="label">Present</div>
+            </div>
+            <div class="stat-card absent">
+                <div class="number" id="absentCount">0</div>
+                <div class="label">Absent</div>
+            </div>
+            <div class="stat-card total">
+                <div class="number" id="totalCount">0</div>
+                <div class="label">Total</div>
+            </div>
+            <div class="stat-card percent">
+                <div class="number" id="percentPresent">0%</div>
+                <div class="label">Attendance</div>
+            </div>
+        </div>
+
+        <div class="attendance-panel">
+            <div class="panel-header">
+                <h2>Attendance Log</h2>
+            </div>
+            <div class="attendance-list" id="attendanceList">
+                <div class="empty-state">No attendance data yet. Start the camera to begin tracking.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let polling = null;
+
+    // Show today's date
+    document.getElementById('currentDate').textContent =
+        new Date().toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+    async function startRecognition() {
+        const btn = document.getElementById('btnStart');
+        btn.disabled = true;
+        btn.textContent = 'Starting...';
+
+        try {
+            const res = await fetch('/start', { method: 'POST' });
+            const data = await res.json();
+
+            if (data.status === 'error') {
+                alert('Error: ' + data.message);
+                btn.disabled = false;
+                btn.textContent = 'Start Recognition';
+                return;
+            }
+
+            // Show video feed
+            document.getElementById('placeholder').style.display = 'none';
+            const feed = document.getElementById('videoFeed');
+            feed.style.display = 'block';
+            feed.src = '/video_feed?' + Date.now();
+
+            // Update UI
+            document.getElementById('statusBadge').className = 'status-badge active';
+            document.getElementById('statusBadge').textContent = 'Live';
+            document.getElementById('btnStop').disabled = false;
+            document.getElementById('btnCSV').disabled = false;
+            btn.textContent = 'Running...';
+
+            // Start polling attendance
+            pollAttendance();
+            polling = setInterval(pollAttendance, 2000);
+
+        } catch (err) {
+            alert('Failed to start: ' + err.message);
+            btn.disabled = false;
+            btn.textContent = 'Start Recognition';
+        }
+    }
+
+    async function stopRecognition() {
+        try {
+            await fetch('/stop', { method: 'POST' });
+        } catch (e) { /* ignore */ }
+
+        // Hide video
+        document.getElementById('videoFeed').style.display = 'none';
+        document.getElementById('videoFeed').src = '';
+        document.getElementById('placeholder').style.display = '';
+
+        // Update UI
+        document.getElementById('statusBadge').className = 'status-badge inactive';
+        document.getElementById('statusBadge').textContent = 'Inactive';
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStart').textContent = 'Start Recognition';
+        document.getElementById('btnStop').disabled = true;
+
+        if (polling) { clearInterval(polling); polling = null; }
+
+        // One final poll to get complete data
+        pollAttendance();
+    }
+
+    async function pollAttendance() {
+        try {
+            const res = await fetch('/attendance');
+            const data = await res.json();
+
+            document.getElementById('presentCount').textContent = data.present_count;
+            document.getElementById('absentCount').textContent = data.absent_count;
+            document.getElementById('totalCount').textContent = data.total;
+
+            const pct = data.total > 0
+                ? Math.round((data.present_count / data.total) * 100)
+                : 0;
+            document.getElementById('percentPresent').textContent = pct + '%';
+
+            // Build attendance list
+            const list = document.getElementById('attendanceList');
+            if (data.total === 0) {
+                list.innerHTML = '<div class="empty-state">No students registered.</div>';
+                return;
+            }
+
+            let html = '';
+            for (const s of data.present) {
+                html += `<div class="attendance-item">
+                    <span class="name">${s.name}</span>
+                    <span class="time">${s.time}</span>
+                    <span class="tag present">Present</span>
+                </div>`;
+            }
+            for (const s of data.absent) {
+                html += `<div class="attendance-item">
+                    <span class="name">${s.name}</span>
+                    <span class="time">--:--:--</span>
+                    <span class="tag absent">Absent</span>
+                </div>`;
+            }
+            list.innerHTML = html;
+
+        } catch (e) { /* silently retry next cycle */ }
+    }
+
+    function downloadCSV() {
+        window.location.href = '/download_csv';
+    }
+</script>
+
+</body>
+</html>
